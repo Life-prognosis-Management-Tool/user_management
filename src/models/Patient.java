@@ -11,11 +11,9 @@ public class Patient extends User {
     private Date artStartDate;
     private String CountryISO;
 
-    public Patient(String f_name, String l_name, String user_email) {
-        super(f_name, l_name, user_email);
+    public Patient(String f_name, String l_name, String user_email, String hashedPassword, String UUID) {
+        super(f_name, l_name, user_email, hashedPassword, UUID);
     }
-
-
 
 
     public String getUUID() {
@@ -24,6 +22,11 @@ public class Patient extends User {
 
     public void setUUID(String UUID) {
         this.UUID = UUID;
+    }
+
+    @Override
+    public String getRole() {
+        return "Patient";
     }
 
     public Date getDOB() {
