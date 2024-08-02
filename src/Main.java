@@ -62,38 +62,38 @@ public class Main {
         return myUserInfo;
     }
 
-    public ArrayList<String> login(String email, String password){
+    public ArrayList<String> login(String email, String password) throws IOException{
         ArrayList<String> myUserInfo = new ArrayList<String>();
-String path3 = "src\\scripts\\login-user.sh";
+        try{
+
+            String hashedPassword = hashPassword(password);
 
 
+            String LOGIN_USER_SCRIPT = "src\\scripts\\login-user.sh";
 
-        String directory = System.getProperty("user.dir");
-        String absolutePath = directory + File.separator + path3;
+            String directory = System.getProperty("user.dir");
+            String absolutePath = directory + File.separator + LOGIN_USER_SCRIPT;
 
-        System.out.println(absolutePath);
+            System.out.println(absolutePath);
 
-        ProcessBuilder myBuilder = new ProcessBuilder(absolutePath,email,password);
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", absolutePath,email,hashedPassword);
 
-        try {
-            Process process = myBuilder.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String result = null;
-            System.out.println("READER --> "+ reader.readLine());
+                Process process = myBuilder.start();
 
-            while((result = reader.readLine()) != null){
-//                System.out.println(result);
-                myUserInfo.add(result);
-            }
+                try(BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));){
+                    String result;
+                    System.out.println("READER --> "+ reader.readLine());
+                    while((result = reader.readLine()) != null){
+                        myUserInfo.add(result);
+                    }
+                }
+            return myUserInfo;
+        } catch (IOException e) {
+        e.printStackTrace();
+    }
 
-        }
-        catch (IOException e){
-            System.out.println("Error: " + e);
-            e.printStackTrace();
-        }
+return myUserInfo;
 
-
-        return myUserInfo;
     }
 
     public ArrayList<String> checkUUID(String UUID){
@@ -158,7 +158,7 @@ String path3 = "src\\scripts\\login-user.sh";
 
             switch (userChoice) {
                 case "1":
-                    System.out.println("Please choose: enter your credentials");
+                    System.out.println("Please choose: Enter your credentials");
                     System.out.println("\nPlease enter your email");
                     String email = scanner.nextLine();
                     System.out.println("Please enter your password");
@@ -166,10 +166,24 @@ String path3 = "src\\scripts\\login-user.sh";
 
                     if (email != null || password != null) {
                         System.out.println("Email: " + email + "Password: " + password);
-                        ArrayList<String> fromLogin = login(email,password);
-                        fromLogin.forEach(line->{
-                            System.out.println(line);
-                        });
+
+                        try{
+
+                            ArrayList<String> fromLogin = login(email,password);
+                            System.out.println("Returened Array = "+ fromLogin.toString());
+                            if(fromLogin.isEmpty()){
+                                System.out.println("Login Failed");
+                            } else {
+                                fromLogin.forEach(line->{
+                                    System.out.println(line);
+                                });
+
+                            }
+
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                         isDone = true;
 
@@ -236,10 +250,10 @@ String path3 = "src\\scripts\\login-user.sh";
 
     private static boolean initialAdminData(String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO) throws IOException {
 
-        String path3 = "src\\scripts\\admin_data.sh";
+        String ADMIN_DATA_SCRIPT = "src\\scripts\\admin_data.sh";
 
         String directory = System.getProperty("user.dir");
-        String absolutePath = directory + File.separator + path3;
+        String absolutePath = directory + File.separator + ADMIN_DATA_SCRIPT;
 
         ProcessBuilder processBuilder = new ProcessBuilder(
                   "bash", absolutePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO
@@ -303,15 +317,6 @@ String path3 = "src\\scripts\\login-user.sh";
         }
     }
 
-
-    //    // For comparison, assume you have a stored hashed password
-//    String storedHashedPassword = hashedPassword; // For demonstration, use the same
-//
-//    // Compare passwords
-//    boolean isMatch = comparePasswords(password, storedHashedPassword);
-//            System.out.println("Password matches: " + isMatch);
-//
-//
     public static boolean comparePasswords(String rawPassword, String storedHashedPassword) throws IOException {
         // Hash the raw password
         String hashedRawPassword = hashPassword(rawPassword);
@@ -321,160 +326,3 @@ String path3 = "src\\scripts\\login-user.sh";
 
 
 }
-
-
-//
-//
-// import java.io.BufferedReader;
-//import java.io.IOException;
-//import java.io.InputStreamReader;
-//
-//public class Main {
-//    public static void main(String[] args) {
-//
-//
-////        // Example flow for user login
-////        String email = "user@example.com"; // Get this from user input
-////        String password = "password123";   // Get this from user input
-//
-//        String filePath = "src/data/users.txt";
-//
-//        try {
-//            boolean sendInitialData = initialData(filePath);
-//            System.out.println("Initial Data Sent ---> " + sendInitialData);
-//            if (sendInitialData) {
-//                System.out.println("Login successful.");
-//                // Proceed to next steps
-//            } else {
-//                System.out.println("Login failed. Please try again.");
-//                // Handle failed login
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-////        try {
-////            boolean authenticated = authenticateUser(email, password);
-////            System.out.println("Boolean ---> " + authenticated);
-////            if (authenticated) {
-////                System.out.println("Login successful.");
-////                // Proceed to next steps
-////            } else {
-////                System.out.println("Login failed. Please try again.");
-////                // Handle failed login
-////            }
-////        } catch (IOException e) {
-////            e.printStackTrace();
-////        }
-//    }
-//
-//    private static boolean initialData(String filepath) throws IOException {
-//        try {
-//            System.out.println("File Path 11111111: " + filepath);
-//            String email = "adminchanged@example.com";
-//            String password = "adminpassword";
-//            String uuid = "123e4567-e89b-12d3-a456-426614174000";
-//            String firstName = "John";
-//            String lastName = "Doe";
-//            String dob = "1980-01-01";
-//            String hasHIV = "true";
-//            String hivDiagnosisDate = "2000-01-01";
-//            String onART = "true";
-//            String artStartDate = "2001-01-01";
-//            String countryISO = "US";
-//
-//            // Call the initialization function
-//            boolean success = initialAdminData(filepath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO);
-//            System.out.println("File Path 11111111 -->: " + filepath);
-//            System.out.println("Success 11111111 -->: " + success);
-//            if (success) {
-//                System.out.println("Admin data initialization successful.");
-//            } else {
-//                System.out.println("Admin data initialization failed.");
-//            }
-//
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return false;
-//    }
-//
-//
-//
-//
-//    private static boolean initialAdminData(String filePath, String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO) throws IOException {
-//        String path12 = "/scripts/admin_data.sh";
-//        ProcessBuilder processBuilder = new ProcessBuilder(
-//                 "bash", path12, filePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO
-//        );
-//
-//        Process process = processBuilder.start();
-//        System.out.println("Process 1111111111111"+ process);
-//        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-//            String line;
-//            System.out.println(reader.readLine());
-//            while ((line = reader.readLine()) != null) {
-//                System.out.println(line); // Print script output
-//                if (line.contains("Initial admin data has been written")) {
-//                    return true;
-//                }
-//            }
-//        }
-//
-//        return false;
-//    }
-//}
-//
-//
-////    private static boolean initialAdminData2222(String email, String password) throws IOException {
-////        ProcessBuilder processBuilder = new ProcessBuilder(
-////                "bash", "scripts/authenticate_user.sh", email, password
-////        );
-////
-////        Process process = processBuilder.start();
-////        System.out.println("Line 1");
-////        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-////            String line;
-////            System.out.println("Line 2 ---> " + reader.readLine());
-////            while ((line = reader.readLine()) != null) {
-////
-////                System.out.println("Line 2 ---> " + reader.readLine());
-////                System.out.println(line); // Print script output
-////                if (line.contains("Authentication successful")) {
-////                    return true;
-////                }
-////            }
-////        }
-////
-////        return false;
-////
-////    }
-//
-//
-//
-////        private static boolean authenticateUser(String email, String password) throws IOException {
-////            ProcessBuilder processBuilder = new ProcessBuilder(
-////                    "bash", "scripts/authenticate_user.sh", email, password
-////            );
-////
-////            Process process = processBuilder.start();
-////            System.out.println("Line 1");
-////            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-////                String line;
-////                System.out.println("Line 2 ---> " + reader.readLine());
-////                while ((line = reader.readLine()) != null) {
-////
-////                    System.out.println("Line 2 ---> " + reader.readLine());
-////                    System.out.println(line); // Print script output
-////                    if (line.contains("Authentication successful")) {
-////                        return true;
-////                    }
-////                }
-////            }
-////
-////            return false;
-////
-////        }
-////}

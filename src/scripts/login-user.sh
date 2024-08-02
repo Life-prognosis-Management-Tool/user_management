@@ -1,18 +1,32 @@
 #!/bin/bash
 
-# Define file path
-USER_FILE="src/data/users.txt"
+USER_FILE="src/data/user-store.txt"
+EMAIL="$1"
+HASHED_PASSWORD="$2"
 
-# Create the directory if it doesn't exist
-mkdir -p "$(dirname "$USER_FILE")"
+while IFS=$'\t' read -r storedEmail storedHashedPassword uuid first_name last_name dob has_hiv hiv_diagnosis_date on_art art_start_date country_iso; do
+    if [ "$storedEmail" == "$EMAIL" ]; then
+        if [ "$storedHashedPassword" == "$HASHED_PASSWORD" ]; then
 
-# Define initial data
-# Format: email<TAB>password
-# Example data for admin
-INITIAL_DATA="admin@example.com\tadminpassword"
+            echo "Authentication successful"
+#            echo $storedEmail $storedHashedPassword $remainingPart
+                echo $storedEmail
+                echo $uuid
+                echo $first_name
+                echo $last_name
+                echo $dob
+                echo $has_hiv
+                echo $hiv_diagnosis_date
+                echo $on_art
+                echo $art_start_date
+                echo $country_iso
+            exit 0
+        else
+            echo "Password does not match"
+            exit 1
+        fi
+    fi
+done < "$USER_FILE"
 
-# Write data to the file
-echo -e "$INITIAL_DATA" > "$USER_FILE"
-
-# Confirm success
-echo "Initial data has been written to $USER_FILE"
+echo "Email not found"
+exit 1
