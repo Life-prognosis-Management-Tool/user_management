@@ -170,7 +170,7 @@ return myUserInfo;
                         try{
 
                             ArrayList<String> fromLogin = login(email,password);
-                            System.out.println("Returened Array = "+ fromLogin.toString());
+                            System.out.println("Returned Array = "+ fromLogin.toString());
                             if(fromLogin.isEmpty()){
                                 System.out.println("Login Failed");
                             } else {
