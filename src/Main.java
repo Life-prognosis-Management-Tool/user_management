@@ -9,8 +9,6 @@ public class Main {
     private static String path1 = "/Users/fm/Desktop/CMU OCPC/Life_Prognosis_Management_Tool/user_management-Class_creation/src/scripts/test.command";
 
 
-
-
     public static void main(String[] args) {
         new Main().app();
     }
@@ -127,13 +125,10 @@ String path3 = "src\\scripts\\login-user.sh";
 
         try {
             boolean sendInitialData = initialData();
-            System.out.println("Initial Data Sent ---> " + sendInitialData);
             if (sendInitialData) {
-                System.out.println("Login successful.");
-                // Proceed to next steps
+                System.out.println("Admin data initialization successful.");
             } else {
-                System.out.println("Login failed. Please try again.");
-                // Handle failed login
+                System.out.println("Admin data initialization failed.");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -246,16 +241,11 @@ String path3 = "src\\scripts\\login-user.sh";
         String directory = System.getProperty("user.dir");
         String absolutePath = directory + File.separator + path3;
 
-        System.out.println(File.separator);
-
-        System.out.println(absolutePath);
-
         ProcessBuilder processBuilder = new ProcessBuilder(
                   "bash", absolutePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO
         );
 
         Process process = processBuilder.start();
-        System.out.println("Process 1111111111111"+ process);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             System.out.println(reader.readLine());
@@ -269,14 +259,12 @@ String path3 = "src\\scripts\\login-user.sh";
 
         return false;
     }
-//    String filePath = "src/data/users.txt";
 
     private static boolean initialData() throws IOException {
         try {
-            System.out.println("File Path 11111111: " );
-            String email = "adminchanged@example.com";
+            String email = "adminnewemail@example.com";
             String password = "adminpassword";
-            String uuid = "123e4567-e89b-12d3-a456-426614174000";
+            String uuid = generateRandomUUID();
             String firstName = "John";
             String lastName = "Doe";
             String dob = "1980-01-01";
@@ -286,23 +274,52 @@ String path3 = "src\\scripts\\login-user.sh";
             String artStartDate = "2001-01-01";
             String countryISO = "US";
 
-            // Call the initialization function
-            boolean success = initialAdminData(email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO);
-            System.out.println("File Path 11111111 -->: " );
-            System.out.println("Success 11111111 -->: " + success);
-            if (success) {
-                System.out.println("Admin data initialization successful.");
-            } else {
-                System.out.println("Admin data initialization failed.");
-            }
+            String hashedPassword = hashPassword(password);
 
+            return  initialAdminData( email, hashedPassword, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return false;
     }
+
+    public static String generateRandomUUID() {
+        UUID uuid = UUID.randomUUID();
+        return uuid.toString();
+    }
+
+    public static String hashPassword(String password) throws IOException {
+        String hashPasswordScript = "src\\scripts\\hash_password.sh";
+        String directory = System.getProperty("user.dir");
+        String absolutePath = directory + File.separator + hashPasswordScript;
+        // Build the command to execute the script
+        ProcessBuilder processBuilder = new ProcessBuilder("bash", absolutePath, password);
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            return reader.readLine().trim();
+        }
+    }
+
+
+    //    // For comparison, assume you have a stored hashed password
+//    String storedHashedPassword = hashedPassword; // For demonstration, use the same
+//
+//    // Compare passwords
+//    boolean isMatch = comparePasswords(password, storedHashedPassword);
+//            System.out.println("Password matches: " + isMatch);
+//
+//
+    public static boolean comparePasswords(String rawPassword, String storedHashedPassword) throws IOException {
+        // Hash the raw password
+        String hashedRawPassword = hashPassword(rawPassword);
+        // Compare the hashed raw password with the stored hashed password
+        return hashedRawPassword.equals(storedHashedPassword);
+    }
+
+
 }
 
 
