@@ -6,17 +6,14 @@ public class Patient extends User {
     private String UUID;
     private Date DOB;
     private Boolean hasHIV;
-    private Boolean hivDiagnosisDate;
+    private Date hivDiagnosisDate;
     private Boolean takingART;
     private Date artStartDate;
     private String CountryISO;
 
-    public Patient(String f_name, String l_name, String user_email) {
-        super(f_name, l_name, user_email);
+    public Patient(String f_name, String l_name, String user_email, String user_password) {
+        super(f_name, l_name, user_email, user_password);
     }
-
-
-
 
     public String getUUID() {
         return UUID;
@@ -42,11 +39,11 @@ public class Patient extends User {
         this.hasHIV = hasHIV;
     }
 
-    public Boolean getHivDiagnosisDate() {
+    public Date getHivDiagnosisDate() {
         return hivDiagnosisDate;
     }
 
-    public void setHivDiagnosisDate(Boolean hivDiagnosisDate) {
+    public void setHivDiagnosisDate(Date hivDiagnosisDate) {
         this.hivDiagnosisDate = hivDiagnosisDate;
     }
 
@@ -71,7 +68,7 @@ public class Patient extends User {
     }
 
     public void setCountryISO(String countryISO) {
-        CountryISO = countryISO;
+        this.CountryISO = countryISO;
     }
 
     public void register(){
