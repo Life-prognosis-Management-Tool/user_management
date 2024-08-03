@@ -118,6 +118,17 @@ public class Main {
     public void app() throws ParseException {
         boolean isDone = false;
 
+        try {
+            boolean sendInitialData = initialData();
+            if (sendInitialData) {
+                System.out.println("Admin data initialization successful.");
+            } else {
+                System.out.println("Admin data initialization failed.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         while(!isDone) {
             Scanner scanner = new Scanner(System.in);
             System.out.println("************************************************************************");
@@ -319,9 +330,9 @@ public class Main {
         Process process = processBuilder.start();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
-            System.out.println(reader.readLine());
+            System.out.println("Reached Here --> "+reader.readLine());
             while ((line = reader.readLine()) != null) {
-                System.out.println(line); // Print script output
+                System.out.println("LINE ---> "+line); // Print script output
                 if (line.contains("Initial admin data has been written")) {
                     return true;
                 }

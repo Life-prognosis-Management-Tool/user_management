@@ -37,16 +37,21 @@ SURVIVAL_RATE="${12}"
 
 DATA="$EMAIL\t$PASSWORD\t$UUID\t$FIRST_NAME\t$LAST_NAME\t$DOB\t$HAS_HIV\t$HIV_DIAGNOSIS_DATE\t$ON_ART\t$ART_START_DATE\t$COUNTRY_ISO\t$SURVIVAL_RATE"
 
-# Temp file
-TEMP_FILE=$(mktemp)
 
-awk -v email="$EMAIL" -v new_data="$DATA" 'BEGIN{FS=OFS="\t"} $1 == email {$0 = new_data} {print}' "$USER_FILE" > "$TEMP_FILE"
+if [ ! -s $USER_FILE ]; then
+#    Write data to the file
+   echo -e "$DATA" >> "$USER_FILE"
+else
+    # Temp file
+    TEMP_FILE=$(mktemp)
 
-mv "$TEMP_FILE" "$USER_FILE"
+    awk -v email="$EMAIL" -v new_data="$DATA" 'BEGIN{FS=OFS="\t"} $1 == email {$0 = new_data} {print}' "$USER_FILE" > "$TEMP_FILE"
+
+    mv "$TEMP_FILE" "$USER_FILE"
+
+fi
 
 
-# Write data to the file
-#echo -e "$DATA" >> "$USER_FILE"
 
 # Confirm success
 echo "Data has been written to $USER_FILE"
