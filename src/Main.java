@@ -43,13 +43,13 @@ public class Main {
         return "The user UUID is: "+myCode + " With Email: "+ email ;
     }
 
-    public ArrayList<String> completeRegisterUser(Patient patient){
+    public ArrayList<String> completeRegisterUser(Patient patient) throws IOException{
         ArrayList<String> myUserInfo = new ArrayList<String>();
-        int life_expectancy = yearsRemaining(patient.getHivDiagnosisDate().toString(),patient.getCountryISO(),patient.getArtStartDate().toString());
-
-        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\register_user.sh", patient.getUser_email(),patient.getUser_password(),patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(),String.valueOf(life_expectancy), UserRole.PATIENT.toString());
-
         try {
+            int life_expectancy = yearsRemaining(patient.getHivDiagnosisDate().toString(),patient.getCountryISO(),patient.getArtStartDate().toString());
+            String hashedPassword = hashPassword(patient.getUser_password());
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\admin_data.sh", patient.getUser_email(), hashedPassword,patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(),String.valueOf(life_expectancy), UserRole.PATIENT.toString());
+
             Process process = myBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String result = null;
@@ -58,13 +58,10 @@ public class Main {
                 myUserInfo.add(result);
             }
 
-        }
-        catch (IOException e){
+        } catch (IOException e){
             System.out.println("Error: " + e);
             e.printStackTrace();
         }
-
-
         return myUserInfo;
     }
 
@@ -278,8 +275,12 @@ return false;
                                 System.out.println("Enter your country ISO-CODE?");
 
                             }
-
-                            ArrayList<String> fromCompleteRegistration =  completeRegisterUser(patient);
+                            ArrayList<String> fromCompleteRegistration = null;
+                            try {
+                                fromCompleteRegistration = completeRegisterUser(patient);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                             if(!fromCompleteRegistration.isEmpty()){
                                 clearScreen();
                                 fromCompleteRegistration.forEach(line-> {
