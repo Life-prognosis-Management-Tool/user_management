@@ -16,7 +16,7 @@ NUM_PARAMS=$#
     # Set Initial Patient email and uuid if we have only two parameters
     PATIENT_EMAIL="$1"
     PATIENT_UUID="$2"
-   INITIAL_DATA="$PATIENT_EMAIL\t\t$PATIENT_UUID\t\t\t\t\t\t\t\t"
+   INITIAL_DATA="$PATIENT_EMAIL\t\t$PATIENT_UUID\t\t\t\t\t\t\t\t\t"
   echo "Saved email and uuid for the patient"
   echo -e "$INITIAL_DATA" >> "$USER_FILE"
   exit 1
@@ -33,9 +33,11 @@ HIV_DIAGNOSIS_DATE="$8"
 ON_ART="$9"
 ART_START_DATE="${10}"
 COUNTRY_ISO="${11}"
-SURVIVAL_RATE="${12}"
+ROLE="${12}"
+SURVIVAL_RATE="${13}"
 
-DATA="$EMAIL\t$PASSWORD\t$UUID\t$FIRST_NAME\t$LAST_NAME\t$DOB\t$HAS_HIV\t$HIV_DIAGNOSIS_DATE\t$ON_ART\t$ART_START_DATE\t$COUNTRY_ISO\t$SURVIVAL_RATE"
+
+DATA="$EMAIL\t$PASSWORD\t$UUID\t$FIRST_NAME\t$LAST_NAME\t$DOB\t$HAS_HIV\t$HIV_DIAGNOSIS_DATE\t$ON_ART\t$ART_START_DATE\t$COUNTRY_ISO\t$ROLE\t$SURVIVAL_RATE"
 
 
 if [ ! -s $USER_FILE ]; then

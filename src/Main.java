@@ -23,15 +23,14 @@ public class Main {
 
     public String initializeRegisterUser(String email){
         ArrayList<String> myUserInfo = new ArrayList<String>();
-
         UUID myCode = UUID.randomUUID();
-        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\mytest.sh",email ,myCode.toString());
+        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\admin_data.sh",email ,myCode.toString());
 
         try {
             Process process = myBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String result = null;
-
+            System.out.println(reader.readLine());
             while((result = reader.readLine()) != null){
                 myUserInfo.add(result);
             }
@@ -41,9 +40,7 @@ public class Main {
             System.out.println("Error: " + e);
             e.printStackTrace();
         }
-
-
-        return "Your The user UUID is: "+myCode + "With Email: "+ email ;
+        return "The user UUID is: "+myCode + " With Email: "+ email ;
     }
 
     public ArrayList<String> completeRegisterUser(Patient patient){
@@ -96,7 +93,7 @@ public class Main {
         return myUserInfo;
     }
 
-    public ArrayList<String> checkUUID(String UUID){
+    public boolean checkUUID(String UUID){
         ArrayList<String> myUserInfo = new ArrayList<String>();
         ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\check_uuid.sh",UUID);
 
@@ -106,18 +103,18 @@ public class Main {
             String result = null;
 
             while((result = reader.readLine()) != null){
-                System.out.println(result);
-                myUserInfo.add(result);
+                if(result.contains("UUID validation successful")){
+                    return true;
+                }
             }
-
+            return false;
         }
         catch (IOException e){
             System.out.println("Error: " + e);
             e.printStackTrace();
         }
 
-
-        return myUserInfo;
+return false;
     }
 
     public void app() throws ParseException {
@@ -178,8 +175,25 @@ public class Main {
                             System.out.println(fromLogin.getFirst());
 
                             if(fromLogin.get(10).equalsIgnoreCase("ADMIN")){
-                                System.out.println("Welcome ADMIN");
-                                isDone = true;
+                                boolean adminFlow = true;
+                                while(adminFlow){
+                                    System.out.println("Welcome ADMIN");
+                                    System.out.println("\nPlease choose: \n1. Register Patient \n2. Logout ");
+                                    String adminOption = scanner.nextLine();
+                                    if(adminOption.equalsIgnoreCase("1")){
+                                        System.out.println("Enter patient email: ");
+                                        String patientEmail = scanner.nextLine();
+                                        String idx = initializeRegisterUser(patientEmail);
+                                        System.out.println(idx);
+
+                                    } else if(adminOption.equalsIgnoreCase("2")){
+                                        adminFlow = false;
+                                    } else {
+                                        System.out.println("Please enter valid choice!");
+                                    }
+                                }
+
+
                             }
                             else if (fromLogin.get(10).equalsIgnoreCase("PATIENT")){
                                 isDone = true;
@@ -207,10 +221,9 @@ public class Main {
 
                     if (userUUID != null) {
                         System.out.println("Checking user UUID");
-                        ArrayList<String> uuidValidArray = checkUUID(userUUID);
-                        String uuidValid  = uuidValidArray.getFirst();
+                        boolean uuidValid = checkUUID(userUUID);
 
-                        if (!uuidValid.contains("not found")){
+                        if (uuidValid){
 
                             SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yyyy");
 
@@ -239,14 +252,15 @@ public class Main {
                             patient.setCountryISO(countryISOCode);
 
                             if(hasHIV) {
+                                Scanner scannerP = new Scanner(System.in);
                                 System.out.println("Please enter your HIV Diagnosis Date e.g: 01-january-2000");
-                                String hivDiagnosisString = scanner.nextLine();
+                                String hivDiagnosisString = scannerP.nextLine();
                                 Date hivDiagnosisDate = formatter.parse(hivDiagnosisString);
                                 System.out.println("Do you take ART treatment? true or false");
-                                boolean takingART = scanner.nextBoolean();
-                                scanner.nextLine();
+                                boolean takingART = scannerP.nextBoolean();
+                                scannerP.nextLine();
                                 System.out.println("When did you start taking ART e.g: 01-january-2000");
-                                String artStartString = scanner.nextLine();
+                                String artStartString = scannerP.nextLine();
                                 Date artStartDate = formatter.parse(artStartString);
 
                                 patient.setHasHIV(hasHIV);
@@ -282,7 +296,9 @@ public class Main {
                         else {
                             System.out.println("UUID: " + userUUID +" is not found.");
                         }
-                        isDone = true;
+//                        isDone = true;
+
+
                     } else {
                         System.out.println("Please enter your UUID");
                         System.out.println("<!> CAUTION: In order to register you must have UUID. If you don't have it please find admin for help.");
@@ -321,15 +337,15 @@ public class Main {
         }
     }
 
-    private static boolean initialAdminData(String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO) throws IOException {
+    private static boolean initialAdminData(String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO, String role) throws IOException {
 
-        String ADMIN_DATA_SCRIPT = "src\\scripts\\admin_data.sh";
+        String ADMIN_DATA_SCRIPT = "\\src\\scripts\\admin_data.sh";
 
         String directory = System.getProperty("user.dir");
         String absolutePath = directory + File.separator + ADMIN_DATA_SCRIPT;
 
         ProcessBuilder processBuilder = new ProcessBuilder(
-                "bash", absolutePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO
+                "bash", absolutePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO, role
         );
 
         Process process = processBuilder.start();
@@ -363,7 +379,7 @@ public class Main {
 
             String hashedPassword = hashPassword(password);
 
-            return  initialAdminData( email, hashedPassword, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO);
+            return  initialAdminData( email, hashedPassword, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO, UserRole.ADMIN.toString());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -403,32 +419,43 @@ public class Main {
 
         int lifeExpectancy = 0;
         try {
-            ProcessBuilder processBuilder = new ProcessBuilder("bash", "life_expectancy.sh", ISO);
+            String LE_SCRIPT = "\\src\\scripts\\life_expectancy.sh";
+            String directory = System.getProperty("user.dir");
+            String absolutePath = directory + File.separator + LE_SCRIPT;
+            ProcessBuilder processBuilder = new ProcessBuilder("bash",absolutePath, ISO);
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                lifeExpectancy = Integer.parseInt(line);
-            }
+            double doubleValue = Double.parseDouble(reader.readLine());
+            lifeExpectancy = (int) doubleValue;
+            System.out.println(" Life Expectancy = " + lifeExpectancy);
+//            while ((line = reader.readLine()) != null) {
+//                lifeExpectancy = Integer.parseInt(line);
+//            }
             process.waitFor();
         } catch (Exception e) {
             e.printStackTrace();
 
         }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy");
         LocalDate hivDiagnoseDate = LocalDate.parse(HivDate, formatter);
         LocalDate ArtStartDate = LocalDate.parse(ArtDate, formatter);
         LocalDate currentDate = LocalDate.now();
         Period HivPeriod = Period.between(hivDiagnoseDate, currentDate);
         Period ArtPeriod = Period.between(ArtStartDate,currentDate);
 
+
         int HivDateDiagnose = HivPeriod.getYears();
         int ArtDateStart = ArtPeriod.getYears();
         int exponent = ArtDateStart - (HivDateDiagnose - 1);
 
+        System.out.println("DATE --->" + HivDateDiagnose + " __ " + ArtDateStart + " __ " + exponent + " -- " + lifeExpectancy);
 
-        return (int) ((lifeExpectancy - HivDateDiagnose) * Math.pow(90,exponent));
+        return (int) ((lifeExpectancy - HivDateDiagnose) * Math.pow(0.9,exponent));
+
+
+
+
     }
 
 

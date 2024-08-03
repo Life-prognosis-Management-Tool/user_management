@@ -4,7 +4,7 @@ USER_FILE="src/data/user-store.txt"
 PROVIDED_UUID="$1"
 #PROVIDED_UUID="a20c8e45-b48a-4de4-a21c-042498f6f4a0"
 
-while IFS=$'\t' read -r storedEmail storedHashedPassword storedUUID remainingPart
+while IFS=$'\t' read -r storedEmail storedUUID
     do
         if [ "$storedUUID" == "$PROVIDED_UUID" ]; then
             echo "UUID validation successful"
