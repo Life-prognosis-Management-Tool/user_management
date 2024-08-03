@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Main {
@@ -22,7 +25,7 @@ public class Main {
         ArrayList<String> myUserInfo = new ArrayList<String>();
 
         UUID myCode = UUID.randomUUID();
-        ProcessBuilder myBuilder = new ProcessBuilder(System.getProperty("user.dir")+"/src/scripts/mytest.sh",email ,myCode.toString());
+        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\mytest.sh",email ,myCode.toString());
 
         try {
             Process process = myBuilder.start();
@@ -45,8 +48,9 @@ public class Main {
 
     public ArrayList<String> completeRegisterUser(Patient patient){
         ArrayList<String> myUserInfo = new ArrayList<String>();
+        int life_expectancy = yearsRemaining(patient.getHivDiagnosisDate().toString(),patient.getCountryISO(),patient.getArtStartDate().toString());
 
-        ProcessBuilder myBuilder = new ProcessBuilder(System.getProperty("user.dir")+"/src/scripts/register_user.sh", patient.getUser_email(),patient.getUser_password(),patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(), UserRole.PATIENT.toString());
+        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\register_user.sh", patient.getUser_email(),patient.getUser_password(),patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(),String.valueOf(life_expectancy), UserRole.PATIENT.toString());
 
         try {
             Process process = myBuilder.start();
@@ -72,7 +76,8 @@ public class Main {
 
         try {
             String hashedPassword = hashPassword(password);
-            ProcessBuilder myBuilder = new ProcessBuilder(path + "/src/scripts/login_user.sh", email, hashedPassword);
+            System.out.println(hashedPassword);
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", path + "\\src\\scripts\\login_user.sh", email, hashedPassword);
             Process process = myBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String result = null;
@@ -93,7 +98,7 @@ public class Main {
 
     public ArrayList<String> checkUUID(String UUID){
         ArrayList<String> myUserInfo = new ArrayList<String>();
-        ProcessBuilder myBuilder = new ProcessBuilder(System.getProperty("user.dir")+"/src/scripts/test.command",UUID);
+        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\check_uuid.sh",UUID);
 
         try {
             Process process = myBuilder.start();
@@ -101,7 +106,7 @@ public class Main {
             String result = null;
 
             while((result = reader.readLine()) != null){
-//                System.out.println(result);
+                System.out.println(result);
                 myUserInfo.add(result);
             }
 
@@ -372,11 +377,13 @@ public class Main {
     }
 
     public static String hashPassword(String password) throws IOException {
-        String hashPasswordScript = "src\\scripts\\hash_password.sh";
+        String hashPasswordScript = "\\src\\scripts\\hash_password.sh";
         String directory = System.getProperty("user.dir");
-        String absolutePath = directory + File.separator + hashPasswordScript;
+//        String absolutePath = directory + File.separator + hashPasswordScript;
+        String absolutePath = directory + hashPasswordScript;
         // Build the command to execute the script
         ProcessBuilder processBuilder = new ProcessBuilder("bash", absolutePath, password);
+
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
 
@@ -390,6 +397,38 @@ public class Main {
         String hashedRawPassword = hashPassword(rawPassword);
         // Compare the hashed raw password with the stored hashed password
         return hashedRawPassword.equals(storedHashedPassword);
+    }
+
+    public  int yearsRemaining(String HivDate,String ISO, String ArtDate){
+
+        int lifeExpectancy = 0;
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder("bash", "life_expectancy.sh", ISO);
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lifeExpectancy = Integer.parseInt(line);
+            }
+            process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate hivDiagnoseDate = LocalDate.parse(HivDate, formatter);
+        LocalDate ArtStartDate = LocalDate.parse(ArtDate, formatter);
+        LocalDate currentDate = LocalDate.now();
+        Period HivPeriod = Period.between(hivDiagnoseDate, currentDate);
+        Period ArtPeriod = Period.between(ArtStartDate,currentDate);
+
+        int HivDateDiagnose = HivPeriod.getYears();
+        int ArtDateStart = ArtPeriod.getYears();
+        int exponent = ArtDateStart - (HivDateDiagnose - 1);
+
+
+        return (int) ((lifeExpectancy - HivDateDiagnose) * Math.pow(90,exponent));
     }
 
 

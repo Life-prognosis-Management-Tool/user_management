@@ -1,5 +1,10 @@
 package models;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class Patient extends User {
@@ -74,7 +79,5 @@ public class Patient extends User {
     public void register(){
 
     }
-    public int yearsRemaining(String DOB,String ISO){
-        return 0;
-    }
+
 }
