@@ -56,5 +56,5 @@ fi
 
 
 # Confirm success
-echo "Data has been written to $USER_FILE"
+echo "Data saved successfully!"
 

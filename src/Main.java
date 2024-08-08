@@ -1,10 +1,7 @@
 import models.Patient;
 import models.UserRole;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -16,7 +13,7 @@ public class Main {
     private final String path = System.getProperty("user.dir");
 
 
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) throws ParseException, IOException {
         new Main().app();
     }
 
@@ -24,7 +21,7 @@ public class Main {
     public String initializeRegisterUser(String email){
         ArrayList<String> myUserInfo = new ArrayList<String>();
         UUID myCode = UUID.randomUUID();
-        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\admin_data.sh",email ,myCode.toString());
+        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"/src/scripts/admin_data.sh",email ,myCode.toString());
 
         try {
             Process process = myBuilder.start();
@@ -47,8 +44,10 @@ public class Main {
         ArrayList<String> myUserInfo = new ArrayList<String>();
         try {
             int life_expectancy = yearsRemaining(patient.getHivDiagnosisDate().toString(),patient.getCountryISO(),patient.getArtStartDate().toString());
-            String hashedPassword = hashPassword(patient.getUser_password());
-            ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\admin_data.sh", patient.getUser_email(), hashedPassword,patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(),String.valueOf(life_expectancy), UserRole.PATIENT.toString());
+
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"/src/scripts/admin_data.sh", patient.getUser_email(), patient.getUser_password(), patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(),String.valueOf(life_expectancy), UserRole.PATIENT.toString());
+
+            System.out.println(patient.getUser_email() +"-Email done-"+ patient.getUser_password()+"--"+patient.getUUID()+"--"+ patient.getF_name()+"--"+patient.getL_name()+"--"+ patient.getDOB().toString()+"--"+ patient.getHasHIV().toString()+"--"+patient.getHivDiagnosisDate().toString()+"--"+patient.getTakingART().toString()+"--"+ patient.getArtStartDate().toString()+"--"+ patient.getCountryISO()+"--"+String.valueOf(life_expectancy)+"--"+ UserRole.PATIENT.toString());
 
             Process process = myBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -69,9 +68,15 @@ public class Main {
         ArrayList<String> myUserInfo = new ArrayList<String>();
 
         try {
-            String hashedPassword = hashPassword(password);
-            System.out.println(hashedPassword);
-            ProcessBuilder myBuilder = new ProcessBuilder("bash", path + "\\src\\scripts\\login_user.sh", email, hashedPassword);
+            String hashedPassword;
+            if(password.length() >= 64){
+                hashedPassword = password;
+            }
+            else {
+                hashedPassword = hashPassword(password);
+            }
+
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", path + "/src/scripts/login_user.sh", email, hashedPassword);
             Process process = myBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String result = null;
@@ -92,7 +97,7 @@ public class Main {
 
     public boolean checkUUID(String UUID){
         ArrayList<String> myUserInfo = new ArrayList<String>();
-        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"\\src\\scripts\\check_uuid.sh",UUID);
+        ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"/src/scripts/check_uuid.sh",UUID);
 
         try {
             Process process = myBuilder.start();
@@ -114,7 +119,7 @@ public class Main {
 return false;
     }
 
-    public void app() throws ParseException {
+    public void app() throws ParseException, IOException {
         boolean isDone = false;
 
         try {
@@ -170,8 +175,9 @@ return false;
                         } else {
                             clearScreen();
                             System.out.println(fromLogin.getFirst());
+                            System.out.println(fromLogin.toString());
 
-                            if(fromLogin.get(10).equalsIgnoreCase("ADMIN")){
+                            if(fromLogin.getLast().equalsIgnoreCase("ADMIN")){
                                 boolean adminFlow = true;
                                 while(adminFlow){
                                     System.out.println("Welcome ADMIN");
@@ -192,20 +198,125 @@ return false;
 
 
                             }
-                            else if (fromLogin.get(10).equalsIgnoreCase("PATIENT")){
+                            else if (fromLogin.getLast().equalsIgnoreCase("PATIENT")){
                                 isDone = true;
-                                Patient patient = new Patient(fromLogin.get(2),fromLogin.get(3),fromLogin.get(1),"");
-                                SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
-                                patient.setDOB(formatter.parse(fromLogin.get(4)));
-                                patient.setHasHIV(Boolean.parseBoolean(fromLogin.get(5)));
-                                patient.setHivDiagnosisDate(formatter.parse(fromLogin.get(6)));
-                                patient.setTakingART(Boolean.parseBoolean(fromLogin.get(7)));
-                                patient.setArtStartDate(formatter.parse(fromLogin.get(8)));
-                                patient.setCountryISO(fromLogin.get(9));
-                                System.out.println("Welcome PATIENT");
+                                while(true) {
+                                    System.out.println();
+                                    Patient patient = new Patient(fromLogin.get(2), fromLogin.get(3), fromLogin.get(1), "");
+                                    SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy", Locale.ENGLISH);
+                                    patient.setDOB(formatter.parse(fromLogin.get(4)));
+                                    patient.setHasHIV(Boolean.parseBoolean(fromLogin.get(5)));
+                                    patient.setHivDiagnosisDate(formatter.parse(fromLogin.get(6)));
+                                    patient.setTakingART(Boolean.parseBoolean(fromLogin.get(7)));
+                                    patient.setArtStartDate(formatter.parse(fromLogin.get(8)));
+                                    patient.setCountryISO(fromLogin.get(9));
+                                    System.out.println("Welcome PATIENT");
+                                    System.out.println("Your Names: " + patient.getF_name() + " " + patient.getL_name());
+                                    System.out.println("Your Email: " + patient.getUser_email());
+                                    SimpleDateFormat formatterToString = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+                                    System.out.println("Your Birthdate: " + formatterToString.format(patient.getDOB()));
+                                    System.out.println("Your HIV status: " + (patient.getHasHIV().equals(false)? "NEGATIVE" : "POSITIVE"));
+                                    if (fromLogin.get(5).contains("true")) {
+                                        System.out.println("Your HIV diagnosis date: " + formatterToString.format(patient.getHivDiagnosisDate()));
+                                        System.out.println( patient.getTakingART().equals(false)? "You don't take ART treatment" : "You take ART treatment");
+                                        System.out.println("Your ART start date: " + formatterToString.format(patient.getArtStartDate()));
+                                        System.out.println("Your Country ISO-Code: " + patient.getCountryISO());
+                                    }
+                                    System.out.println("\n\nPlease Choose \n 1. Get updated life-expectancy \n 2. Update your information");
+                                    String logedUserChoice = scanner.nextLine();
+
+                                    switch (logedUserChoice){
+                                        case "1":
+                                            System.out.println("Coming Soon");
+                                            System.out.println("-->"+logedUserChoice);
+                                        case "2":
+                                            clearScreen();
+                                            System.out.println("-->"+logedUserChoice);
+                                            System.out.println("You can now edit. Leave place empty if you don't want to it to be edited.");
+                                            System.out.println("/!\\ You can't edit your email and UUID.");
+                                            System.out.println("Your First Name: " + fromLogin.get(2));
+                                            String updatedFirstName = scanner.nextLine();
+                                            System.out.println("Your Last Name: " + fromLogin.get(3));
+                                            String updatedLastName = scanner.nextLine();
+                                            System.out.println("Your Date of Birth " + fromLogin.get(4) +" use 01-july-2000 format");
+                                            String updatedDateOfBirth = scanner.nextLine();
+                                            System.out.println("Your HIV Status " + fromLogin.get(5));
+                                            String updatedHIVStatus = scanner.nextLine();
+
+
+                                            if(!Objects.equals(updatedFirstName, "")){
+                                                patient.setF_name(updatedFirstName);
+                                            }
+                                            if(!Objects.equals(updatedLastName, "")){
+                                                patient.setL_name(updatedLastName);
+                                            }
+                                            if(!Objects.equals(updatedDateOfBirth, "")){
+                                                patient.setDOB( formatter.parse(updatedDateOfBirth));
+                                            }
+                                            if(!Objects.equals(updatedHIVStatus, "")){
+                                                patient.setHasHIV(Boolean.parseBoolean(updatedHIVStatus));
+                                            }
+
+
+                                            if(patient.getHasHIV()) {
+                                                System.out.println("Your HIV Diagnosis Date " + fromLogin.get(6) + " use 01-july-2000 format");
+                                                String updatedDiagnosisDate = scanner.nextLine();
+                                                System.out.println("Your ART Status " + fromLogin.get(7));
+                                                String updatedARTStatus = scanner.nextLine();
+                                                System.out.println("Your ART start date " + fromLogin.get(8) + " use 01-july-2000 format");
+                                                String updatedARTStartingDate = scanner.nextLine();
+                                                System.out.println("Your Country ISO Code " + fromLogin.get(9));
+                                                String updatedCountryISOCode = scanner.nextLine();
+
+                                                if(!Objects.equals(updatedDiagnosisDate, "")){
+                                                    patient.setHivDiagnosisDate(formatter.parse(updatedDiagnosisDate));
+                                                }
+                                                if(!Objects.equals(updatedARTStatus, "")){
+                                                    patient.setTakingART(Boolean.parseBoolean(updatedARTStatus));
+                                                }
+                                                if(!Objects.equals(updatedARTStartingDate, "")){
+                                                    patient.setArtStartDate(formatter.parse(updatedARTStartingDate));
+                                                }
+                                                if(!Objects.equals(updatedCountryISOCode, "")){
+                                                    patient.setCountryISO(updatedCountryISOCode);
+                                                }
+                                            }
+
+
+                                            patient.setUser_email(fromLogin.get(1));
+                                            patient.setUser_password(fromLogin.get(11));
+                                            patient.setUUID(fromLogin.get(12));
+
+//
+
+
+                                            ArrayList<String> fromCompleteUpdatedRegistration = new ArrayList<String>();
+                                            try {
+                                                fromCompleteUpdatedRegistration = completeRegisterUser(patient);
+
+                                                fromLogin = login(patient.getUser_email(),fromLogin.get(11));
+
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                            if(!fromCompleteUpdatedRegistration.isEmpty()){
+                                                clearScreen();
+                                                fromCompleteUpdatedRegistration.forEach(line-> {
+                                                    System.out.println(line);
+                                                });
+                                                System.out.println("Your Information is updated");
+
+                                            }
+                                            else{
+                                                System.out.println("Invalid Email or Password");
+                                            }
+
+                                    }
+
+                                }
                             }
                             else {
-                                System.out.println("No roleeeeee");
+                                System.out.println("Sorry, No role");
                             }
                         }
                     } else {
@@ -235,6 +346,7 @@ return false;
                             String mail = scanner.nextLine();
                             System.out.println("Please enter your Password");
                             String userPassword = scanner.nextLine();
+                            String hashedPassword = hashPassword(userPassword);
                             System.out.println("Please enter your Date of birth e.g: 01-january-2000");
                             String sob = scanner.nextLine();
                             Date dob = formatter.parse(sob);
@@ -247,6 +359,7 @@ return false;
                             patient.setUUID(userUUID);
                             patient.setDOB(dob);
                             patient.setCountryISO(countryISOCode);
+                            patient.setUser_password(hashedPassword);
 
                             if(hasHIV) {
                                 Scanner scannerP = new Scanner(System.in);
@@ -267,14 +380,15 @@ return false;
                             }
                             else {
                                 patient.setHasHIV(false);
-                                Date hivDiagnosisDate = formatter.parse("01-january-1000");
+                                Date hivDiagnosisDate = formatter.parse("01-january-2000");
                                 patient.setHivDiagnosisDate(hivDiagnosisDate);
                                 patient.setTakingART(false);
-                                Date artStartDate = formatter.parse("01-january-1000");
+                                Date artStartDate = formatter.parse("01-january-2001");
                                 patient.setArtStartDate(artStartDate);
                                 System.out.println("Enter your country ISO-CODE?");
 
                             }
+
                             ArrayList<String> fromCompleteRegistration = null;
                             try {
                                 fromCompleteRegistration = completeRegisterUser(patient);
@@ -321,6 +435,39 @@ return false;
 //    });
     }
 
+    private void createEmptyCSVFile(String fileName) {
+        FileWriter fileWriter = null;
+        ArrayList<String> myUserInfo = new ArrayList<String>();
+
+        try {
+            File file = new File(fileName);
+            fileWriter = new FileWriter(file);
+
+            //Just add path to script that will be retrieving users
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", path + "/src/scripts/login_user.sh");
+            Process process = myBuilder.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String result = null;
+
+            while ((result = reader.readLine()) != null) {
+                System.out.println(result);
+                myUserInfo.add(result);
+            }
+            fileWriter.write("Line 1");
+
+            System.out.println(fileName + " has been created.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (fileWriter != null) {
+                try {
+                    fileWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
     private void printHelp() {
         System.out.println("\n\n***************************************************************************************************************");
         System.out.println("*********************************************** HELP **********************************************************");
@@ -340,7 +487,7 @@ return false;
 
     private static boolean initialAdminData(String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO, String role) throws IOException {
 
-        String ADMIN_DATA_SCRIPT = "\\src\\scripts\\admin_data.sh";
+        String ADMIN_DATA_SCRIPT = "/src/scripts/admin_data.sh";
 
         String directory = System.getProperty("user.dir");
         String absolutePath = directory + File.separator + ADMIN_DATA_SCRIPT;
@@ -394,7 +541,7 @@ return false;
     }
 
     public static String hashPassword(String password) throws IOException {
-        String hashPasswordScript = "\\src\\scripts\\hash_password.sh";
+        String hashPasswordScript = "/src/scripts/hash_password.sh";
         String directory = System.getProperty("user.dir");
 //        String absolutePath = directory + File.separator + hashPasswordScript;
         String absolutePath = directory + hashPasswordScript;
@@ -420,7 +567,7 @@ return false;
 
         int lifeExpectancy = 0;
         try {
-            String LE_SCRIPT = "\\src\\scripts\\life_expectancy.sh";
+            String LE_SCRIPT = "/src/scripts/life_expectancy.sh";
             String directory = System.getProperty("user.dir");
             String absolutePath = directory + File.separator + LE_SCRIPT;
             ProcessBuilder processBuilder = new ProcessBuilder("bash",absolutePath, ISO);

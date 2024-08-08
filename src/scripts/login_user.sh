@@ -7,11 +7,8 @@ HASHED_PASSWORD="$2"
 while IFS=$'\t' read -r storedEmail storedHashedPassword uuid first_name last_name dob has_hiv hiv_diagnosis_date on_art art_start_date country_iso life_remaining stored_role; do
     if [ "$storedEmail" == "$EMAIL" ]; then
         if [ "$storedHashedPassword" == "$HASHED_PASSWORD" ]; then
-
-            echo "Authentication successful"
-#            echo $storedEmail $storedHashedPassword $remainingPart
+                echo "Authentication successful"
                 echo "$storedEmail"
-#                echo "$uuid"
                 echo "$first_name"
                 echo "$last_name"
                 echo "$dob"
@@ -21,6 +18,8 @@ while IFS=$'\t' read -r storedEmail storedHashedPassword uuid first_name last_na
                 echo "$art_start_date"
                 echo "$country_iso"
                 echo "$life_remaining"
+                echo "$storedHashedPassword"
+                echo "$uuid"
                 echo "$stored_role"
             exit 0
         else
