@@ -5,6 +5,7 @@ import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -43,7 +44,7 @@ public class Main {
     public ArrayList<String> completeRegisterUser(Patient patient) throws IOException{
         ArrayList<String> myUserInfo = new ArrayList<String>();
         try {
-            int life_expectancy = yearsRemaining(patient.getHivDiagnosisDate().toString(),patient.getCountryISO(),patient.getArtStartDate().toString());
+            int life_expectancy = yearsRemaining(patient.getHivDiagnosisDate().toString(),patient.getCountryISO(),patient.getArtStartDate().toString(), patient.getDOB().toString());
 
             ProcessBuilder myBuilder = new ProcessBuilder("bash", System.getProperty("user.dir")+"/src/scripts/admin_data.sh", patient.getUser_email(), patient.getUser_password(), patient.getUUID(), patient.getF_name(), patient.getL_name(), patient.getDOB().toString(), patient.getHasHIV().toString(), patient.getHivDiagnosisDate().toString(),patient.getTakingART().toString(), patient.getArtStartDate().toString(), patient.getCountryISO(),String.valueOf(life_expectancy), UserRole.PATIENT.toString());
 
@@ -121,17 +122,17 @@ return false;
 
     public void app() throws ParseException, IOException {
         boolean isDone = false;
-
-        try {
-            boolean sendInitialData = initialData();
-            if (sendInitialData) {
-                System.out.println("Admin data initialization successful.");
-            } else {
-                System.out.println("Admin data initialization failed.");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//
+//        try {
+//            boolean sendInitialData = initialData();
+//            if (sendInitialData) {
+//                System.out.println("Admin data initialization successful.");
+//            } else {
+//                System.out.println("Admin data initialization failed.");
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         while(!isDone) {
             Scanner scanner = new Scanner(System.in);
@@ -142,7 +143,6 @@ return false;
             System.out.println("************************************************************************");
             System.out.println("\nPlease choose: \n1. Login \n2. Register with UUID \n3. Help \n4. Exit ");
             String userChoice = scanner.nextLine();
-
 
             if (userChoice.equalsIgnoreCase("3")) {
                 printHelp();
@@ -174,14 +174,14 @@ return false;
 
                         } else {
                             clearScreen();
-                            System.out.println(fromLogin.getFirst());
-                            System.out.println(fromLogin.toString());
+//                            System.out.println(fromLogin.getFirst());
+//                            System.out.println(fromLogin.toString());
 
                             if(fromLogin.getLast().equalsIgnoreCase("ADMIN")){
                                 boolean adminFlow = true;
                                 while(adminFlow){
                                     System.out.println("Welcome ADMIN");
-                                    System.out.println("\nPlease choose: \n1. Register Patient \n2. Logout ");
+                                    System.out.println("\nPlease choose: \n1. Register Patient \n2. Export report \n3. Logout ");
                                     String adminOption = scanner.nextLine();
                                     if(adminOption.equalsIgnoreCase("1")){
                                         System.out.println("Enter patient email: ");
@@ -190,8 +190,14 @@ return false;
                                         System.out.println(idx);
 
                                     } else if(adminOption.equalsIgnoreCase("2")){
+                                            String fileName = "All_users"+ LocalDateTime.now();
+                                            createCSVFile(fileName);
+                                            System.out.println("Report is exported successfully "+ fileName);
+                                    }else if(adminOption.equalsIgnoreCase("3")){
                                         adminFlow = false;
-                                    } else {
+//
+                                    }
+                                    else {
                                         System.out.println("Please enter valid choice!");
                                     }
                                 }
@@ -316,6 +322,8 @@ return false;
                                 }
                             }
                             else {
+                                System.out.println("==>"+fromLogin.getLast());
+//                                System.out.println(fromLogin.getLast());
                                 System.out.println("Sorry, No role");
                             }
                         }
@@ -419,6 +427,8 @@ return false;
                         System.out.println("<!> CAUTION: In order to register you must have UUID. If you don't have it please find admin for help.");
                     }
                     break;
+
+
                 default:
                     System.out.println("Please enter valid option");
                     break;
@@ -435,32 +445,33 @@ return false;
 //    });
     }
 
-    private void createEmptyCSVFile(String fileName) {
+    private void createCSVFile(String fileName) {
         FileWriter fileWriter = null;
         ArrayList<String> myUserInfo = new ArrayList<String>();
+
 
         try {
             File file = new File(fileName);
             fileWriter = new FileWriter(file);
 
             //Just add path to script that will be retrieving users
-            ProcessBuilder myBuilder = new ProcessBuilder("bash", path + "/src/scripts/login_user.sh");
+            ProcessBuilder myBuilder = new ProcessBuilder("bash", path + "/src/scripts/readUsersData.sh");
             Process process = myBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String result = null;
-
+            fileWriter.write("EMAIL \t HASHED PASSWORDS \t UUID \t FIRST NAMES \t LAST NAMES \t DATE OF BIRTH \t HIV STATUS \t HIV DIAGNOSIS DATE \t ART STATUS \t ART START DATE \t COUNTRY \t LIFE EXPECTANCY \n");
             while ((result = reader.readLine()) != null) {
-                System.out.println(result);
+//                System.out.println(result);
+                fileWriter.write(result +"\n");
                 myUserInfo.add(result);
             }
-            fileWriter.write("Line 1");
 
-            System.out.println(fileName + " has been created.");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             if (fileWriter != null) {
                 try {
+                    System.out.println(fileName + " has been created.");
                     fileWriter.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -485,55 +496,55 @@ return false;
         }
     }
 
-    private static boolean initialAdminData(String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO, String role) throws IOException {
-
-        String ADMIN_DATA_SCRIPT = "/src/scripts/admin_data.sh";
-
-        String directory = System.getProperty("user.dir");
-        String absolutePath = directory + File.separator + ADMIN_DATA_SCRIPT;
-
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "bash", absolutePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO, role
-        );
-
-        Process process = processBuilder.start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            System.out.println("Reached Here --> "+reader.readLine());
-            while ((line = reader.readLine()) != null) {
-                System.out.println("LINE ---> "+line); // Print script output
-                if (line.contains("Initial admin data has been written")) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean initialData() throws IOException {
-        try {
-            String email = "adminnewemail@example.com";
-            String password = "adminpassword";
-            String uuid = generateRandomUUID();
-            String firstName = "John";
-            String lastName = "Doe";
-            String dob = "1980-01-01";
-            String hasHIV = "true";
-            String hivDiagnosisDate = "2000-01-01";
-            String onART = "true";
-            String artStartDate = "2001-01-01";
-            String countryISO = "US";
-
-            String hashedPassword = hashPassword(password);
-
-            return  initialAdminData( email, hashedPassword, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO, UserRole.ADMIN.toString());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+//    private static boolean initialAdminData(String email, String password, String uuid, String firstName, String lastName, String dob, String hasHIV, String hivDiagnosisDate, String onART, String artStartDate, String countryISO, String role) throws IOException {
+//
+//        String ADMIN_DATA_SCRIPT = "/src/scripts/admin_data.sh";
+//
+//        String directory = System.getProperty("user.dir");
+//        String absolutePath = directory + File.separator + ADMIN_DATA_SCRIPT;
+//
+//        ProcessBuilder processBuilder = new ProcessBuilder(
+//                "bash", absolutePath, email, password, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO, role
+//        );
+//
+//        Process process = processBuilder.start();
+//        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+//            String line;
+//            System.out.println("Reached Here --> "+reader.readLine());
+//            while ((line = reader.readLine()) != null) {
+//                System.out.println("LINE ---> "+line); // Print script output
+//                if (line.contains("Initial admin data has been written")) {
+//                    return true;
+//                }
+//            }
+//        }
+//
+//        return false;
+//    }
+//
+//    private static boolean initialData() throws IOException {
+//        try {
+//            String email = "adminnewemail@example.com";
+//            String password = "adminpassword";
+//            String uuid = generateRandomUUID();
+//            String firstName = "John";
+//            String lastName = "Doe";
+//            String dob = "1980-01-01";
+//            String hasHIV = "true";
+//            String hivDiagnosisDate = "2000-01-01";
+//            String onART = "true";
+//            String artStartDate = "2001-01-01";
+//            String countryISO = "US";
+//
+//            String hashedPassword = hashPassword(password);
+//
+//            return  initialAdminData( email, hashedPassword, uuid, firstName, lastName, dob, hasHIV, hivDiagnosisDate, onART, artStartDate, countryISO, UserRole.ADMIN.toString());
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        return false;
+//    }
 
     public static String generateRandomUUID() {
         UUID uuid = UUID.randomUUID();
@@ -563,7 +574,7 @@ return false;
         return hashedRawPassword.equals(storedHashedPassword);
     }
 
-    public  int yearsRemaining(String HivDate,String ISO, String ArtDate){
+    public  int yearsRemaining(String HivDate,String ISO, String ArtDate,String DOB){
 
         int lifeExpectancy = 0;
         try {
@@ -588,18 +599,22 @@ return false;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss z yyyy");
         LocalDate hivDiagnoseDate = LocalDate.parse(HivDate, formatter);
         LocalDate ArtStartDate = LocalDate.parse(ArtDate, formatter);
+        LocalDate BirthDate = LocalDate.parse(DOB,formatter);
         LocalDate currentDate = LocalDate.now();
         Period HivPeriod = Period.between(hivDiagnoseDate, currentDate);
         Period ArtPeriod = Period.between(ArtStartDate,currentDate);
+        Period BirthPeriod = Period.between(BirthDate,currentDate);
 
 
         int HivDateDiagnose = HivPeriod.getYears();
         int ArtDateStart = ArtPeriod.getYears();
-        int exponent = ArtDateStart - (HivDateDiagnose - 1);
+        int age = BirthPeriod.getYears();
+        int Rhiv = age - HivDateDiagnose;
+        int exponent = HivDateDiagnose - (ArtDateStart - 1);
 
-        System.out.println("DATE --->" + HivDateDiagnose + " __ " + ArtDateStart + " __ " + exponent + " -- " + lifeExpectancy);
+        System.out.println("DATE --->" + HivDateDiagnose + " ArtDateStart: " + ArtDateStart + " age: " + age + "lifeExpectancy: " + lifeExpectancy + "Rhiv: "+Rhiv+ "exponent: " +exponent );
 
-        return (int) ((lifeExpectancy - HivDateDiagnose) * Math.pow(0.9,exponent));
+        return (int) ((lifeExpectancy - Rhiv) * Math.pow(0.9,exponent));
 
 
 
